@@ -1,0 +1,147 @@
+<!DOCTYPE html><html><head><title>DEMO</title><meta charset="UTF-8">
+<style>*{position:absolute;margin:0px;}</style><body>
+<script type="text/javascript">
+
+
+//==  GLOBAL VARIABLES  ======================================================//
+
+var ww,wh,tick=0,tickOffset=0,elapsed=0;
+var paddingX, paddingY;
+var overlay=1,overlayGoal=0.8,overlayAlpha=4,overlayBig="Weeps",overlaySub="Click to begin";
+var diffHover=0,diffGoal=[0,0,0,0,0],diffAlpha=[0,0,0,0,0],lastDifficulty = 1;
+var fading=false,evaluate=false,lastEvalReqTick=-1;
+var cellLs,markerLs,edgeCellLs,fillLs;
+var width,height,oldScale=-1,scale;
+var phi=0.381966,sq3=Math.sqrt(3);
+var padding=48,menuHeight=64;
+
+var canvas = document.createElement("canvas");
+var gfx = canvas.getContext("2d");
+
+function rand(x){return Math.floor(Math.random()*x);};
+function shuffle(ls){return ls.sort(function(){return 0.5-Math.random();});}
+Number.prototype.mod = function(n){return((this%n)+n)%n;};
+
+function rgb(r,g,b){return gfx.fillStyle=gfx.strokeStyle="rgb("+Math.floor(255*r)+","+Math.floor(255*g)+","+Math.floor(255*b)+")";};
+
+function text(array,y,size,spacing, page){
+	gfx.textBaseline = "alphabetic";
+	gfx.font = "italic 800 "+size*1.37+"px times";
+	for(var k=0;k<array.length;++k){
+		string = array[k];
+		var x = (page.canvas.width/2)-(gfx.measureText(string).width+(spacing*(string.length-1)))/2;
+		console.log(string, x, y);
+		for(var i=0;i<string.length;++i){
+			gfx.fillText(string.charAt(i),x,y+size);
+			x += gfx.measureText(string.charAt(i)).width+spacing;
+		}
+		y+= size*1.6;
+	}
+}
+
+onmousedown = function(e){
+	if(curPage.mouseclick)
+	{
+		var rect = canvas.getBoundingClientRect();
+		e.mouseX = e.clientX - rect.left;
+		e.mouseY = e.clientY - rect.top;
+		curPage.mouseclick(e);
+	}
+}
+
+function padding(){};
+var pages = {
+	title : {value: 0, name: "Title Screen Page", canvas: null, render: function(){
+		if(this.canvas === null || oldScale !== scale){
+			this.canvas = document.createElement("canvas");
+			this.canvas.height = scale;
+			this.canvas.width = scale*(4/3);
+			gfx = this.canvas.getContext("2d");
+			//gfx.scale(cScale,cScale);
+			rgb(0.5, 0.7, 0.97);
+			gfx.fillRect(0,0,this.canvas.width,this.canvas.height);
+			rgb(0,0,0);
+			text(["THIS IS DEMO TEXT", "", "Click Anywhere to Switch Menus"], canvas.height*3/10, 34, 1, this);
+			gfx = canvas.getContext("2d");
+		}
+
+		gfx.save();
+		//gfx.translate(this.attachedTo.x,this.attachedTo.y);
+		//gfx.scale(1/cScale,1/cScale);
+		gfx.drawImage(this.canvas,paddingX,paddingY);//-this.canvas.width/2,-this.canvas.height/2);
+		gfx.restore();
+	}, mouseclick: function(e) {
+		console.log("click title " + e.mouseX + ". " + e.mouseY);
+		curPage = pages.main;
+	}},
+	main : {value: 0, name: "Main Page", canvas: null, render: function(){
+		if(this.canvas === null || oldScale !== scale){
+			this.canvas = document.createElement("canvas");
+			this.canvas.height = scale;
+			this.canvas.width = scale*(4/3);
+			gfx = this.canvas.getContext("2d");
+			//gfx.scale(cScale,cScale);
+			rgb(0.7, 0.3, 0.3);
+			gfx.fillRect(0,0,this.canvas.width,this.canvas.height);
+			rgb(0,0,0);
+			text(["THIS IS THE SECOND SCREEN", "", "Click Anywhere to Log Click"], canvas.height*3/10, 34, 1, this);
+						gfx = canvas.getContext("2d");
+		}
+
+		gfx.save();
+		//gfx.translate(this.attachedTo.x,this.attachedTo.y);
+		//gfx.scale(1/cScale,1/cScale);
+		gfx.drawImage(this.canvas,paddingX,paddingY);//-this.canvas.width/2,-this.canvas.height/2);
+		gfx.restore();
+	}, mouseclick: function(e) {
+		console.log("click main " + e.mouseX + ". " + e.mouseY);
+		curPage = pages.main;
+	}},
+	options : {value: 1, name: "Options Screen", canvas: document.createElement("canvas")},
+};
+var curPage = pages.title;
+
+canvas.oncontextmenu = function(){return false;}; // prevent right click menu
+
+window.onresize = function(){ // auto-resize canvas to window
+	ww = canvas.width  = window.innerWidth;
+	wh = canvas.height = window.innerHeight;
+
+	//var scaleX = (ww-2*padding)/width;
+	//var scaleY = (wh-2*padding-menuHeight)/height;
+	scale = Math.min(ww*(3/4),wh);
+		paddingX = (ww-scale*(4/3))/2;
+		paddingY = (wh-scale)/2;
+
+	//if(!animating)requestAnimationFrame(render);
+};
+var animating;
+function render(){
+	animating = true;
+	//var currentTick = new Date().getTime()-tickOffset;
+	//elapsed = Math.min(currentTick-tick,5);
+	//tick = currentTick;
+	//if(evaluate){evaluate=false;evalPaths();}
+	rgb(.8,.8,.8);
+	gfx.fillRect(0,0,ww,wh);
+	gfx.save();
+	var animating = false;
+	//if(renderMenu())animating = true;
+	curPage.render();
+	gfx.restore();
+	//for(var i in fillLs)if(renderPath(fillLs[i]))animating = true;
+	//if(renderOverlay())animating = true;
+	oldScale = scale;
+	animating=false;
+	requestAnimationFrame(render);
+};
+
+(function main(){
+	document.body.appendChild(canvas);
+		window.onresize();
+		//if(!animating)
+		requestAnimationFrame(render);
+		}
+)();
+
+</script></body></html>
